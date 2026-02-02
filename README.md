@@ -57,14 +57,14 @@ const client = createClient({
   network: 'mainnet',
 });
 
-// Read content
+// Read content (maps to /api/explore?path=...)
 const content = await client.readContent('/oak-chain/0x.../content/page');
 
-// Read with children
-const tree = await client.readContentTree('/oak-chain/0x.../content', 2);
+// Read tree depth is not supported by the validator API (reserved for future)
+const tree = await client.readContentTree('/oak-chain/0x.../content', 2); // returns NOT_SUPPORTED
 
-// List children
-const children = await client.listChildren('/oak-chain/0x.../content');
+// List children is not supported by the validator API (reserved for future)
+const children = await client.listChildren('/oak-chain/0x.../content'); // returns NOT_SUPPORTED
 
 // Check existence
 const exists = await client.exists('/oak-chain/0x.../content/page');
@@ -81,15 +81,14 @@ const txHash = await payForWrite(wallet, 'express');
 
 // 2. Sign the write proposal
 const proposal = await signWriteProposal(wallet, {
-  organization: 'MyOrg',
-  path: 'content/page',
-  content: {
+  message: JSON.stringify({
     'jcr:primaryType': 'nt:unstructured',
     'jcr:title': 'My Page',
     'text': 'Hello, Oak Chain!',
-  },
+  }),
+  organization: 'MyOrg',
   paymentTier: 'express',
-  txHash,
+  ethereumTxHash: txHash,
 });
 
 // 3. Submit to validators
@@ -103,12 +102,12 @@ import { createSSEClient } from '@oak-chain/sdk';
 
 const sse = createSSEClient({
   endpoint: 'https://validators.oak-chain.io',
-  eventTypes: ['content-created', 'content-updated', 'content-deleted'],
+  eventTypes: ['content', 'delete', 'binary', 'wallet', 'consensus'],
 });
 
 // Subscribe to content changes
 sse.onContentChange((event) => {
-  console.log(`${event.data.changeType}: ${event.data.path}`);
+  console.log(`${event.data.action}: ${event.data.path}`);
 });
 
 // Subscribe to epoch finalization
@@ -171,8 +170,8 @@ Main client for HTTP API operations.
 | Method | Description |
 |--------|-------------|
 | `readContent(path)` | Read content node |
-| `readContentTree(path, depth)` | Read content with children |
-| `listChildren(path, page, pageSize)` | List child nodes |
+| `readContentTree(path, depth)` | Not supported (reserved for future) |
+| `listChildren(path, page, pageSize)` | Not supported (reserved for future) |
 | `exists(path)` | Check if path exists |
 | `proposeWrite(proposal)` | Submit write proposal |
 | `proposeDelete(proposal)` | Submit delete proposal |
