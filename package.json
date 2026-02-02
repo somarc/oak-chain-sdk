@@ -1,0 +1,75 @@
+{
+  "name": "@oak-chain/sdk",
+  "version": "0.1.0",
+  "description": "Official SDK for Oak Chain - decentralized content repository",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./streaming": {
+      "import": "./dist/streaming/index.mjs",
+      "require": "./dist/streaming/index.js",
+      "types": "./dist/streaming/index.d.ts"
+    },
+    "./ipfs": {
+      "import": "./dist/ipfs/index.mjs",
+      "require": "./dist/ipfs/index.js",
+      "types": "./dist/ipfs/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest",
+    "test:coverage": "vitest --coverage",
+    "lint": "eslint src --ext .ts",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "oak-chain",
+    "blockchain",
+    "content-repository",
+    "jcr",
+    "ethereum",
+    "ipfs",
+    "decentralized"
+  ],
+  "author": "Oak Chain Contributors",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/oak-chain/sdk.git"
+  },
+  "bugs": {
+    "url": "https://github.com/oak-chain/sdk/issues"
+  },
+  "homepage": "https://oak-chain.io",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "peerDependencies": {
+    "ethers": "^6.0.0"
+  },
+  "peerDependenciesMeta": {
+    "ethers": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "eslint": "^8.55.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.3.0",
+    "vitest": "^1.0.0"
+  }
+}
