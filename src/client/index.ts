@@ -15,7 +15,11 @@ import type {
   WriteProposalResponse,
   DeleteProposal,
   DeleteProposalResponse,
+  ProposalId,
+  ProposalStatus,
   ClusterStatus,
+  BlockchainRuntimeConfig,
+  ReleaseFlowSnapshot,
   ValidatorInfo,
   PaymentTier,
   PaymentTierConfig,
@@ -68,6 +72,13 @@ export class OakChainClient {
       ...options,
     } as OakChainConfig;
 
+  }
+
+  /**
+   * Resolved validator endpoint
+   */
+  get endpoint(): string {
+    return this.config.endpoint;
   }
 
   // ===========================================================================
@@ -147,9 +158,31 @@ export class OakChainClient {
    * Propose a delete to Oak Chain
    * 
    * Only the content owner (wallet) can delete.
+   * Chain-backed delete still depends on runtime and contract parity.
    */
   async proposeDelete(proposal: DeleteProposal): Promise<ApiResponse<DeleteProposalResponse>> {
     return this.requestForm<DeleteProposalResponse>('POST', '/v1/propose-delete', proposal);
+  }
+
+  /**
+   * Fetch proposal status
+   */
+  async getProposalStatus(proposalId: ProposalId): Promise<ApiResponse<ProposalStatus>> {
+    return this.request<ProposalStatus>('GET', `/v1/proposals/${proposalId}/status`);
+  }
+
+  /**
+   * Fetch validator blockchain/runtime config
+   */
+  async getBlockchainConfig(): Promise<ApiResponse<BlockchainRuntimeConfig>> {
+    return this.request<BlockchainRuntimeConfig>('GET', '/v1/blockchain/config');
+  }
+
+  /**
+   * Fetch public release-flow description
+   */
+  async getReleaseFlow(): Promise<ApiResponse<ReleaseFlowSnapshot>> {
+    return this.request<ReleaseFlowSnapshot>('GET', '/v1/proposals/release-flow');
   }
 
   // ===========================================================================
@@ -157,14 +190,24 @@ export class OakChainClient {
   // ===========================================================================
 
   /**
-   * Get payment tier configuration
+   * Deprecated compatibility shim.
+   *
+   * Oak Chain no longer exposes payment tiers as public latency buckets.
    */
   async getPaymentTiers(): Promise<ApiResponse<PaymentTierConfig[]>> {
-    return this.request<PaymentTierConfig[]>('GET', '/v1/payment/tiers');
+    return {
+      success: false,
+      error: {
+        code: 'DEPRECATED_SURFACE',
+        message: 'Oak Chain no longer exposes /v1/payment/tiers as a public latency surface. Use getBlockchainConfig() and getReleaseFlow() instead.',
+      },
+    };
   }
 
   /**
-   * Verify a payment transaction
+   * Deprecated compatibility shim.
+   *
+   * Proposal tracking should use proposalId plus proposal status.
    */
   async verifyPayment(txHash: TransactionHash): Promise<ApiResponse<{
     verified: boolean;
@@ -172,7 +215,14 @@ export class OakChainClient {
     wallet: WalletAddress;
     expiresAt: number;
   }>> {
-    return this.request('GET', `/v1/payment/verify/${txHash}`);
+    void txHash;
+    return {
+      success: false,
+      error: {
+        code: 'DEPRECATED_SURFACE',
+        message: 'Validator payment verification is no longer exposed via /v1/payment/verify. Track proposalId with getProposalStatus() and use on-chain transaction status separately.',
+      },
+    };
   }
 
   // ===========================================================================

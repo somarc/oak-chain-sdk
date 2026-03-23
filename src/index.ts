@@ -14,6 +14,7 @@ export type {
   // Wallet & Identity
   WalletAddress,
   TransactionHash,
+  ProposalId,
   CID,
   Signature,
   
@@ -34,6 +35,7 @@ export type {
   WriteProposalResponse,
   DeleteProposal,
   DeleteProposalResponse,
+  ProposalStatus,
   
   // Streaming
   SSEEventType,
@@ -44,6 +46,8 @@ export type {
   // Cluster
   ValidatorInfo,
   ClusterStatus,
+  BlockchainRuntimeConfig,
+  ReleaseFlowSnapshot,
   
   // API
   ApiResponse,
@@ -69,6 +73,7 @@ export {
   createWriteProposalMessage,
   createDeleteProposalMessage,
   formatSigningMessage,
+  generateProposalId,
   signWriteProposal,
   signDeleteProposal,
   verifySignature,
@@ -162,7 +167,7 @@ export class OakChain {
     const { OakChainIPFS } = require('./ipfs');
 
     this.client = new OakChainClient(options);
-    this.sse = new OakChainSSE({ endpoint: options.endpoint });
+    this.sse = new OakChainSSE({ endpoint: this.client.endpoint });
     this.ipfs = new OakChainIPFS(options.ipfs);
   }
 

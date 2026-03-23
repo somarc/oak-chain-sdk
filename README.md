@@ -73,26 +73,35 @@ const exists = await client.exists('/oak-chain/0x.../content/page');
 ### Write Operations
 
 ```typescript
-import { signWriteProposal } from '@oak-chain/sdk';
+import { generateProposalId, signWriteProposal } from '@oak-chain/sdk';
 import { ethers } from 'ethers';
 
-// 1. Pay for write via smart contract (get txHash)
-const txHash = await payForWrite(wallet, 'express');
+// 1. Generate a client-side proposalId (bytes32 hex)
+const proposalId = generateProposalId();
 
-// 2. Sign the write proposal
+// 2. Pay for write via smart contract (get txHash)
+// paymentTier is a payment class, not a public latency bucket
+const txHash = await payForWrite(wallet, proposalId, 'standard');
+
+// 3. Sign the write proposal
 const proposal = await signWriteProposal(wallet, {
+  proposalId,
   message: JSON.stringify({
+    proposalId,
     'jcr:primaryType': 'nt:unstructured',
     'jcr:title': 'My Page',
     'text': 'Hello, Oak Chain!',
   }),
   organization: 'MyOrg',
-  paymentTier: 'express',
+  paymentTier: 'standard',
   ethereumTxHash: txHash,
 });
 
-// 3. Submit to validators
+// 4. Submit to validators
 const result = await client.proposeWrite(proposal);
+
+// 5. Track proposal lifecycle
+const status = await client.getProposalStatus(proposalId);
 ```
 
 ### Real-Time Streaming (SSE)
@@ -108,11 +117,6 @@ const sse = createSSEClient({
 // Subscribe to content changes
 sse.onContentChange((event) => {
   console.log(`${event.data.action}: ${event.data.path}`);
-});
-
-// Subscribe to epoch finalization
-sse.onEpochFinalized((event) => {
-  console.log(`Epoch ${event.data.epoch} finalized`);
 });
 
 // Handle connection state
@@ -174,9 +178,10 @@ Main client for HTTP API operations.
 | `listChildren(path, page, pageSize)` | Not supported (reserved for future) |
 | `exists(path)` | Check if path exists |
 | `proposeWrite(proposal)` | Submit write proposal |
-| `proposeDelete(proposal)` | Submit delete proposal |
-| `getPaymentTiers()` | Get payment tier config |
-| `verifyPayment(txHash)` | Verify payment transaction |
+| `proposeDelete(proposal)` | Submit delete proposal (chain-backed go-live parity still in progress) |
+| `getProposalStatus(proposalId)` | Fetch proposal lifecycle status |
+| `getBlockchainConfig()` | Fetch validator blockchain/runtime config |
+| `getReleaseFlow()` | Fetch public release-flow description |
 | `getClusterStatus()` | Get cluster status |
 | `getValidators()` | Get validator list |
 | `healthCheck()` | Health check |
@@ -217,6 +222,7 @@ All TypeScript types are exported:
 ```typescript
 import type {
   WalletAddress,
+  ProposalId,
   ContentPath,
   ContentNode,
   WriteProposal,
@@ -225,6 +231,18 @@ import type {
   // ... and more
 } from '@oak-chain/sdk';
 ```
+
+## Payment Class Semantics
+
+`paymentTier` remains in the SDK as a compatibility field name, but Oak Chain
+now treats it as a payment class carried through pricing and policy surfaces.
+It is not the public explanation for release timing.
+
+Use these validator surfaces for runtime behavior:
+
+- `getBlockchainConfig()`
+- `getReleaseFlow()`
+- `getProposalStatus(proposalId)`
 
 ## Networks
 

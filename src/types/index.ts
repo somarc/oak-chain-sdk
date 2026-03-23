@@ -19,6 +19,11 @@ export type WalletAddress = `0x${string}`;
 export type TransactionHash = `0x${string}`;
 
 /**
+ * Oak Chain proposal identifier (chain-backed bytes32 hex)
+ */
+export type ProposalId = `0x${string}`;
+
+/**
  * IPFS Content Identifier (CIDv1)
  */
 export type CID = string;
@@ -89,12 +94,14 @@ export interface BinaryReference {
 // =============================================================================
 
 /**
- * Payment tier for write operations
+ * Payment class carried through contract and policy surfaces.
+ *
+ * This is not a public latency bucket.
  */
 export type PaymentTier = 'priority' | 'express' | 'standard';
 
 /**
- * Payment tier configuration
+ * Compatibility-only payment-class configuration
  */
 export interface PaymentTierConfig {
   /** Tier name */
@@ -151,6 +158,8 @@ export interface PaymentReceipt {
  * Write proposal to Oak Chain
  */
 export interface WriteProposal {
+  /** Client-supplied bytes32 proposal ID */
+  proposalId: ProposalId;
   /** Author wallet address */
   walletAddress: WalletAddress;
   /** Backward-compatible wallet field (use walletAddress) */
@@ -205,6 +214,8 @@ export interface WriteProposalResponse {
  * Delete proposal to Oak Chain
  */
 export interface DeleteProposal {
+  /** Client-supplied bytes32 proposal ID */
+  proposalId: ProposalId;
   /** Author wallet address */
   walletAddress: WalletAddress;
   /** Backward-compatible wallet field (use walletAddress) */
@@ -213,6 +224,8 @@ export interface DeleteProposal {
   contentPath: ContentPath;
   /** Payment transaction hash */
   ethereumTxHash: TransactionHash;
+  /** Payment class (policy metadata, not latency bucket) */
+  paymentTier?: PaymentTier;
   /** Signature of the proposal */
   signature: Signature;
   /** Optional client identifier */
@@ -353,6 +366,48 @@ export interface ClusterStatus {
   allFollowers?: string[];
   /** Ethereum epoch */
   ethereumEpoch?: number;
+  /** Allow additional fields */
+  [key: string]: unknown;
+}
+
+/**
+ * Proposal status from the validator API
+ */
+export interface ProposalStatus {
+  /** Proposal ID */
+  proposalId: string;
+  /** Proposal kind */
+  type?: 'WRITE' | 'DELETE';
+  /** Lifecycle state */
+  state?: 'PENDING' | 'VERIFIED' | 'COMMITTED' | 'REJECTED';
+  /** Optional message */
+  message?: string;
+  /** Allow additional fields */
+  [key: string]: unknown;
+}
+
+/**
+ * Validator blockchain/runtime config surface
+ */
+export interface BlockchainRuntimeConfig {
+  /** Public scheduler model */
+  schedulerModel?: string;
+  /** Operator toggle for premium direct release */
+  priorityDirectReleaseEnabled?: boolean;
+  /** Human-readable payment class semantics */
+  paymentClasses?: Record<string, unknown>;
+  /** Allow additional fields */
+  [key: string]: unknown;
+}
+
+/**
+ * Release-flow overview from the validator
+ */
+export interface ReleaseFlowSnapshot {
+  /** Public scheduler model */
+  schedulerModel?: string;
+  /** Ordered release stages */
+  stages?: string[];
   /** Allow additional fields */
   [key: string]: unknown;
 }

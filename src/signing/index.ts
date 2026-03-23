@@ -10,6 +10,7 @@ import type {
   ContentNode,
   WriteProposal,
   DeleteProposal,
+  ProposalId,
   PaymentTier,
   TransactionHash,
 } from '../types';
@@ -88,6 +89,7 @@ export function formatSigningMessage(message: WriteProposalMessage | DeletePropo
 export async function signWriteProposal(
   signer: Signer,
   params: {
+    proposalId: ProposalId;
     message: string;
     contentType?: string;
     paymentTier?: PaymentTier;
@@ -107,6 +109,7 @@ export async function signWriteProposal(
   const signature = await signer.signMessage(formattedMessage) as Signature;
 
   return {
+    proposalId: params.proposalId,
     walletAddress: wallet,
     wallet,
     organization: params.organization,
@@ -127,8 +130,10 @@ export async function signWriteProposal(
 export async function signDeleteProposal(
   signer: Signer,
   params: {
+    proposalId: ProposalId;
     contentPath: string;
     ethereumTxHash: TransactionHash;
+    paymentTier?: PaymentTier;
     clientId?: string;
   }
 ): Promise<DeleteProposal> {
@@ -141,13 +146,32 @@ export async function signDeleteProposal(
   const signature = await signer.signMessage(formattedMessage) as Signature;
 
   return {
+    proposalId: params.proposalId,
     walletAddress: wallet,
     wallet,
     contentPath: params.contentPath,
     ethereumTxHash: params.ethereumTxHash,
+    paymentTier: params.paymentTier,
     signature,
     clientId: params.clientId,
   };
+}
+
+/**
+ * Generate a client-side bytes32 proposal ID.
+ */
+export function generateProposalId(): ProposalId {
+  const bytes = new Uint8Array(32);
+
+  if (typeof globalThis.crypto !== 'undefined' && typeof globalThis.crypto.getRandomValues === 'function') {
+    globalThis.crypto.getRandomValues(bytes);
+  } else {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { randomBytes } = require('crypto') as { randomBytes: (size: number) => Uint8Array };
+    bytes.set(randomBytes(32));
+  }
+
+  return `0x${Array.from(bytes).map((b) => b.toString(16).padStart(2, '0')).join('')}` as ProposalId;
 }
 
 /**

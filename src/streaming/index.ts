@@ -204,7 +204,7 @@ export class OakChainSSE {
   // ===========================================================================
 
   private buildUrl(): string {
-    const url = new URL('/v1/stream', this.options.endpoint);
+    const url = new URL('/v1/events/stream', this.options.endpoint);
 
     if (this.options.eventTypes.length > 0) {
       url.searchParams.set('events', this.options.eventTypes.join(','));
